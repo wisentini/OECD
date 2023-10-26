@@ -21,7 +21,7 @@ Returns a data frame with two variables: \code{id} and \code{description}
 
 }
 \seealso{
-\code{\link{search_dataset}} to search for a specific data set or a 
+\code{\link{search_dataset}} to search for a specific data set or a
   keyword in the description, and \code{\link{get_data_structure}} to get the
   dimensions of specified data set.
 }

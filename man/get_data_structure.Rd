@@ -13,7 +13,7 @@ get_data_structure(dataset)
 A list of data frames.
 }
 \description{
-Returns a list of data frames containing names and descriptions of the variables 
+Returns a list of data frames containing names and descriptions of the variables
 of a specified series.
 }
 \examples{

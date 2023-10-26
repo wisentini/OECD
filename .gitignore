@@ -3,3 +3,7 @@
 .RData
 inst/doc
 readme.html
+/doc/
+/Meta/
+.Rprofile
+R/test.R

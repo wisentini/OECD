@@ -9,9 +9,9 @@ search_dataset(string, data = get_datasets(), ignore.case = TRUE)
 \arguments{
 \item{string}{A regular expression string to search for.}
 
-\item{data}{The data frame to search. This can be either a data frame 
-previously fetched using \code{\link{get_datasets}} (recommended) or left 
-blank, in which case a temporary data frame is fetched. The second option 
+\item{data}{The data frame to search. This can be either a data frame
+previously fetched using \code{\link{get_datasets}} (recommended) or left
+blank, in which case a temporary data frame is fetched. The second option
 adds a few seconds to each search query.}
 
 \item{ignore.case}{Whether the search should be case-insensitive.}
@@ -20,7 +20,7 @@ adds a few seconds to each search query.}
 A data frame.
 }
 \description{
-Returns a data frame containing the series codes and descriptions for the 
+Returns a data frame containing the series codes and descriptions for the
 OECD series which match the given criteria.
 }
 \examples{

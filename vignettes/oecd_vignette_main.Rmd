@@ -1,12 +1,10 @@
 ---
 title: "Reproducible and dynamic access to OECD data"
-date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Reproducible and programmatic access to OECD data}
-  %\VignetteEngine{knitr::knitr}
+  %\VignetteEngine{rmarkdown::render}
   %\usepackage[utf8]{inputenc}
----
 
 ```{r options, echo=FALSE}
 knitr::opts_chunk$set(cache = FALSE, warning = FALSE, error = FALSE, eval = TRUE)
@@ -17,16 +15,17 @@ library(OECD)
 
 The `OECD` package allows the user to download data from the OECD's API in a
 dynamic and reproducible way.
+This is a fork from https://github.com/expersso/OECD that incorporates the
+solutions in the comments to keep the package compatible with the current version of the api.
 
-The package can be installed from either CRAN or Github (development version):
+
+The package can be installed from Github (development version) only:
 
 ```{r loadLibrary, eval=FALSE}
-# from CRAN
-install.packages("OECD")
 
 # from Github
 library(devtools)
-install_github("expersso/OECD")
+install_github("VIG-RM/OECD")
 
 library(OECD)
 ```
@@ -120,13 +119,23 @@ produce a plot.
 
 ```{r plot, cache = FALSE, fig.width = 7, fig.height = 4, fig.cap = "Unemployment rates of foreign- and native-born populations"}
 df_plot <- df[df$DURATION == "UN5", ]
-df_plot$obsTime <- as.numeric(df_plot$obsTime)
+df_plot$Time <- as.numeric(df_plot$Time)
+df_plot$ObsValue <- as.numeric(df_plot$ObsValue)
 
 library(ggplot2)
-
-qplot(data = df_plot, x = obsTime, y = obsValue, color = COUNTRY, geom = "line") +
-  labs(x = NULL, y = "Persons, thousands", color = NULL,
-       title = "Number of long-term unemployed men, aged 20-24")
+ggplot2::ggplot(data = df_plot,
+                ) +
+  ggplot2::theme_minimal()+
+  ggplot2::geom_line(ggplot2::aes(x = Time,
+                                  y = ObsValue,
+                                  group = COUNTRY)) +
+  ggplot2::facet_grid(vars(COUNTRY))+
+  labs(
+    x = NULL,
+    y = "Persons, thousands",
+    color = NULL,
+    title = "Number of long-term unemployed men, aged 20-24"
+  )
 ```
 
 If we want more in-depth information about a dataset (e.g. methodology, exact
@@ -162,7 +171,7 @@ df <- get_dataset("REGION_INNOVATION",
 head(df)
 ```
 
-![OECD Screenshot](figures/oecd.png)
+![OECD Screenshot](man/oecd.png)
 
 ### Other information
 
