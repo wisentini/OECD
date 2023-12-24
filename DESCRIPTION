@@ -1,16 +1,15 @@
 Package: OECD
 Type: Package
 Title: Search and Extract Data from the OECD
-Version: 0.2.5.9000
+Version: 0.2.6
 Date: 2019-10-14
 Authors@R: c(
-  person("Eric", "Persson", email = "expersso5@gmail.com",role = c("aut","cph")),
-  person("Christian", "Geier", email = "093186@corpnet.at",role = c("cre")))
-Description: Search and extract data from the Organization for Economic 
-    Cooperation and Development (OECD).
+  person("Eric", "Persson", email = "expersso5@gmail.com", role = c("aut","cph")),
+  person("Marcos", "Visentini", email = "marcosvisentini@gmail.com", role = c("cre")))
+Description: Search and extract data from the Organization for Economic Cooperation and Development (OECD).
 License: CC0
-URL: https://github.com/VIG-RM/OECD
-BugReports: https://github.com/VIG-RM/OECD/issues
+URL: https://github.com/wisentini/OECD
+BugReports: https://github.com/wisentini/OECD/issues
 Imports:
     httr (>= 0.6.1),
     readsdmx,

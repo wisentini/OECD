@@ -4,6 +4,7 @@ utils::globalVariables(c("en", "id", "description", "label.en", "."))
 #'
 #' Returns a data frame with two variables: \code{id} and \code{description}
 #'
+
 #' @param ... Additional parameters passed to \code{httr::GET}.
 #'
 #' @return A data frame.
@@ -13,23 +14,55 @@ utils::globalVariables(c("en", "id", "description", "label.en", "."))
 #'   dimensions of specified data set.
 #'
 #' @examples
+
 #' \dontrun{datasets <- get_datasets()}
 #' \dontrun{head(datasets)}
 #'
 #' @export
 get_datasets <- function(...) {
-  url <- "https://stats.oecd.org/RestSDMX/sdmx.ashx/GetKeyFamily/all"
-  
-  page <- xml2::read_xml(httr::GET(url, ...))
-  
-  id <-
-    xml2::xml_attr(xml2::xml_find_all(page, "//*[@agencyID='OECD']"), "id")
-  
-  title <- xml2::xml_text(xml2::xml_find_all(page, "//*[@agencyID='OECD']/*[@xml:lang='en']"))
-  
-  df <- data.frame(id, title)
-  class(df) <- c("tbl_df", "tbl", "data.frame")
-  df
+    url <- "https://stats.oecd.org/RestSDMX/sdmx.ashx/GetKeyFamily/all"
+    
+    page <- xml2::read_xml(httr::GET(url, ...))
+    
+    id <- xml2::xml_attr(xml2::xml_find_all(page, "//*[@agencyID='OECD']"), "id")
+    
+    title <- xml2::xml_text(xml2::xml_find_all(page, "//*[@agencyID='OECD']/*[@xml:lang='en']"))
+    
+    df <- data.frame(id, title)
+    
+    class(df) <- c("tbl_df", "tbl", "data.frame")
+    
+    df
+}
+
+#' Get the dimensions of a dataset.
+#'
+#' Returns a list of characters containing names of the dimensions
+#' of a specified series.
+#'
+#' @param dataset A string containing the code for a dataset.
+#'
+#' @return A list of characters.
+#'
+#' @examples
+#' \dontrun{get_dimensions("DUR_D")}
+#'
+#' @export
+#' @import methods
+get_dimensions <- function(dataset) {
+    url <- paste0("https://stats.oecd.org/restsdmx/sdmx.ashx/GetDataStructure/", dataset)
+    
+    response <- httr::GET(url)
+    
+    xml_content <- xml2::read_xml(response$content)
+    
+    xml2::xml_ns_strip(xml_content)
+    
+    dimension_elements <- xml2::xml_find_all(xml_content, "//Dimension")
+    
+    dimensions <- xml2::xml_attr(dimension_elements, "conceptRef")
+    
+    dimensions
 }
 
 #' Search codes and descriptions of available OECD series
@@ -55,12 +88,9 @@ get_datasets <- function(...) {
 #' \dontrun{search_dataset("employment", dsets)}
 #'
 #' @export
-search_dataset <-
-  function(string,
-           data = get_datasets(),
-           ignore.case = TRUE) {
+search_dataset <- function(string, data = get_datasets(), ignore.case = TRUE) {
     data[grepl(string, data$title, ignore.case = ignore.case),]
-  }
+}
 
 #' Get the data structure of a dataset.
 #'
@@ -77,57 +107,60 @@ search_dataset <-
 #' @export
 #' @import methods
 get_data_structure <- function(dataset) {
-  url <-
-    paste0("https://stats.oecd.org/restsdmx/sdmx.ashx/GetDataStructure/",
-           dataset)
-  
-  data_structure <- readsdmx::read_sdmx(url)
-  
-  data_structure$id <- gsub(paste0("CL_", dataset, "_"), "",
-                            data_structure$id)
-  
-  code_list <-
-    split(data_structure[c("id", "value", "en_description")],
-          factor(data_structure$id, levels = unique(data_structure$id)))
-  
-  code_list <- lapply(code_list, function(x) {
-    x <- x[c("value", "en_description")]
-    rownames(x) <- NULL
-    colnames(x) <- c("id", "label")
-    return(x)
-  })
-  
-  lookup <- data.frame(
-    id = c(
-      "OBS_VALUE",
-      "TIME_FORMAT",
-      "UNIT",
-      "POWERCODE",
-      "REFERENCEPERIOD"
-    ),
-    description = c(
-      "Observation Value",
-      "Time Format",
-      "Unit",
-      "Unit multiplier",
-      "Reference period"
+    url <- paste0(
+        "https://stats.oecd.org/restsdmx/sdmx.ashx/GetDataStructure/",
+        dataset
     )
-  )
-  lookup <-
-    lookup[lookup$id %in% names(code_list) |
-             lookup$id == "OBS_VALUE", ]
-  
-  colnames(data_structure)[colnames(data_structure) == "en"] <-
-    "description"
-  variable_desc <- data_structure[c("id", "description")]
-  variable_desc <-
-    unique(variable_desc[!variable_desc$id %in% lookup$id, ])
-  
-  variable_desc <- rbind(lookup, variable_desc)
-  
-  full_df_list <- c(VAR_DESC = list(variable_desc), code_list)
-  
-  return(full_df_list)
+    
+    data_structure <- readsdmx::read_sdmx(url)
+    
+    data_structure$id <- gsub(paste0("CL_", dataset, "_"), "", data_structure$id)
+    
+    code_list <- split(
+        data_structure[c("id", "value", "en_description")],
+        factor(data_structure$id, levels = unique(data_structure$id))
+    )
+    
+    code_list <- lapply(code_list, function(x) {
+        x <- x[c("value", "en_description")]
+        
+        rownames(x) <- NULL
+        
+        colnames(x) <- c("id", "label")
+        
+        return(x)
+    })
+    
+    lookup <- data.frame(
+        id = c(
+            "OBS_VALUE",
+            "TIME_FORMAT",
+            "UNIT",
+            "POWERCODE",
+            "REFERENCEPERIOD"
+        ),
+        description = c(
+            "Observation Value",
+            "Time Format",
+            "Unit",
+            "Unit multiplier",
+            "Reference period"
+        )
+    )
+    
+    lookup <- lookup[lookup$id %in% names(code_list) | lookup$id == "OBS_VALUE",]
+    
+    colnames(data_structure)[colnames(data_structure) == "en"] <- "description"
+    
+    variable_desc <- data_structure[c("id", "description")]
+    
+    variable_desc <- unique(variable_desc[!variable_desc$id %in% lookup$id,])
+    
+    variable_desc <- rbind(lookup, variable_desc)
+    
+    full_df_list <- c(VAR_DESC = list(variable_desc), code_list)
+    
+    return(full_df_list)
 }
 
 #' Browse the metadata related to a series.
@@ -144,12 +177,12 @@ get_data_structure <- function(dataset) {
 #'
 #' @export
 browse_metadata <- function(dataset, ...) {
-  url <- sprintf(
-    "https://stats.oecd.org/OECDStat_Metadata/ShowMetadata.ashx?Dataset=%s&Lang=en",
-    dataset
-  )
-  
-  utils::browseURL(url, ...)
+    url <- sprintf(
+        "https://stats.oecd.org/OECDStat_Metadata/ShowMetadata.ashx?Dataset=%s&Lang=en",
+        dataset
+    )
+    
+    utils::browseURL(url, ...)
 }
 
 #' Download OECD data sets.
@@ -195,50 +228,50 @@ browse_metadata <- function(dataset, ...) {
 #' \dontrun{head(df, 10)}
 #'
 #' @export
-get_dataset <-
-  function(dataset,
-           filter = NULL,
-           start_time = NULL,
-           end_time = NULL,
-           pre_formatted = FALSE,
-           ...) {
+get_dataset <- function(dataset,
+    filter = NULL,
+    start_time = NULL,
+    end_time = NULL,
+    pre_formatted = FALSE,
+    ...
+) {
     # Case error
     if (is.null(filter) && pre_formatted) {
-      stop("If pre_formatted is TRUE, you must provide a value to the filter argument.")
+        stop("If pre_formatted is TRUE, you must provide a value to the filter argument.")
     }
     
     # Case all data
     if (is.null(filter) && !pre_formatted) {
-      filter <- "all"
+        filter <- "all"
     }
     
     # Case user-provided filter
     if (!is.null(filter) && !pre_formatted) {
-      filter <- lapply(filter, function(x)
-        paste(x, collapse = "+"))
-      filter <- paste(filter, collapse = ".")
+        filter <- lapply(filter, function(x) paste(x, collapse = "+"))
+        filter <- paste(filter, collapse = ".")
     }
     
     # Case pre-formatted filter
     if (!is.null(filter) && pre_formatted) {
-      filter <- filter
+        filter <- filter
     }
     
-    path <-
-      sprintf("restsdmx/sdmx.ashx/GetData/%s/%s/all", dataset, filter)
+    path <- sprintf("restsdmx/sdmx.ashx/GetData/%s/%s/all", dataset, filter)
     
     url_list <- list(
-      "scheme"   = "https",
-      "hostname" = "stats.oecd.org",
-      "path"     = path,
-      "query"    = list("startTime" = start_time,
-                        "endTime" = end_time)
+        "scheme" = "https",
+        "hostname" = "stats.oecd.org",
+        "path" = path,
+        "query" = list("startTime" = start_time, "endTime" = end_time)
     )
+    
     class(url_list) <- "url"
     
     url <- httr::build_url(url_list)
     
     df <- readsdmx::read_sdmx((url), ...)
+    
     class(df) <- c("tbl_df", "tbl", "data.frame")
+    
     df
-  }
+}

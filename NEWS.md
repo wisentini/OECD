@@ -1,5 +1,10 @@
+# OECD 0.2.6
+
+* Implement new function `get_dimensions` to get the dimensions of a dataset.
+
 # OECD 0.2.5.9000
-* use github comments to make it work again
+
+* Use github comments to make it work again.
 
 # OECD 0.2.0
 
